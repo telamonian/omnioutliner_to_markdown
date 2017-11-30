@@ -27,7 +27,7 @@ bak_*
 .gdb_history
 
 # python stuff
-lma.egg-info
+*.egg-info/
 *.pyc
 *.ptx
 __pycache__/
