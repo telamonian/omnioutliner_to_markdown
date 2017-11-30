@@ -1,0 +1,147 @@
+function run() {
+
+// My pandoc template file; you'll need one of these to include necessary LaTeX front- and back-matter e.g. "\begin{document}." (You'll also need to look up where pandoc stores these and put yours there.)
+
+// var pandocTemplate = 'dmgarticletemplate';
+
+// Setup
+
+var app = Application.currentApplication();
+app.includeStandardAdditions = true;
+var OmniOutliner = Application('OmniOutliner');
+
+// Get the current document
+
+var doc = OmniOutliner.documents[0];
+
+// Get the name (stripped of spaces) of the Omni Outliner document. The script may fail if your filename includes certain characters, e.g. parentheses.
+
+var fileName = doc.name().replace(/\s/g, '');
+
+// Create a directory on the desktop to hold our new files
+
+var desktopString = app.pathTo("desktop").toString()
+app.doShellScript(`mkdir -p ${desktopString}/LaTeX/`);
+
+// The text of the paper
+
+var paperText = "";
+
+// Loop through rows and append their text to paperText
+
+doc.rows().forEach(function(theRow) {
+	if (Object.keys(theRow.style.namedStyles).length > 0) {
+		switch(theRow.style.namedStyles[0].name()) {
+			case "Heading 1":
+				paperText += "# ";
+				break;
+			case "Heading 2":
+				paperText += "## ";
+				break;
+			case "Heading 3":
+				paperText += "### ";
+				break;
+			case "Blockquote":
+				paperText += "> ";
+				break;
+			case "Ordered List":
+				paperText += "1. ";
+				break;
+			case "Unordered List":
+				paperText += "* ";
+				break;
+		}
+	}
+	paperText += rowTextMD(theRow);
+	paperText += "\r\r";
+});
+
+// Convert the text of the paper to UTF8 encoding so pandoc can read it
+
+paperText = $.NSString.alloc.initWithUTF8String(paperText);
+
+// Write paperText to a new markdown file
+
+var file = `${desktopString}/LaTeX/${fileName}.md`
+paperText.writeToFileAtomicallyEncodingError(file, true, $.NSUTF8StringEncoding, null);
+
+// Use pandoc to convert that markdown file to a tex file
+
+// shellCommand = `/usr/local/bin/pandoc ${desktopString}/LaTeX/${fileName}.md -f markdown -t latex -o ${desktopString}/LaTeX/${fileName}.tex --template=${pandocTemplate}`;
+
+// app.doShellScript(shellCommand);
+
+// Compile our new tex file to PDF using xelatex
+
+// shellCommand = `/Library/TeX/texbin/xelatex --output-directory=${desktopString}/LaTeX/ ${desktopString}/LaTeX/${fileName}.tex`;
+
+// app.doShellScript(shellCommand);
+
+return true;
+
+}
+
+// From apple's documentation for Javascript for Automation
+
+function writeTextToFile(text, file, overwriteExistingContent) {
+    try {
+
+        // Convert the file to a string
+        var fileString = file.toString()
+
+        // Open the file for writing
+        var openedFile = app.openForAccess(Path(fileString), { writePermission: true })
+
+        // Clear the file if content should be overwritten
+        if (overwriteExistingContent) {
+            app.setEof(openedFile, { to: 0 })
+        }
+
+        // Write the new content to the file
+        app.write(text, { to: openedFile, startingAt: app.getEof(openedFile) })
+
+        // Close the file
+        app.closeAccess(openedFile)
+
+        // Return a boolean indicating that writing was successful
+        return true
+    }
+    catch(error) {
+
+        try {
+            // Close the file
+            app.closeAccess(file)
+        }
+        catch(error) {
+            // Report the error is closing failed
+            console.log(`Couldn't close file: ${error}`)
+        }
+
+        // Return a boolean indicating that writing was successful
+        return false
+    }
+}
+
+// Code below written by draft8, based on code written by SGIII, in turn adapted from AppleScript code written by Rob Trew
+
+const rowTextMD = row => {
+        const
+            as = row.topic.attributeRuns;
+        return enumFromTo(0, as.length - 1)
+            .reduce((s, i) => {
+                const
+                    attrib = as.at(i),
+                    fnt = attrib.font(),
+                    bld = (fnt.includes('Bold') || fnt.includes('Black')) ? (
+                        '**'
+                    ) : '',
+                    ital = fnt.includes('Italic') ? '*' : '';
+                return s + bld + ital + attrib.text() + ital + bld;
+            }, '') + '\n';
+    };
+
+// enumFromTo :: Int -> Int -> [Int]
+const enumFromTo = (m, n) =>
+	Array.from({
+	length: Math.floor(n - m) + 1
+    }, (_, i) => m + i);
