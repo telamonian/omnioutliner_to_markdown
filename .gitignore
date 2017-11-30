@@ -10,21 +10,7 @@
 /*.app
 /.settings
 
-*.d
-*.gif
-*.o
-*.orig
-*.pb.h
-*.pb.cc
-*.png
-
 bak_*
-/.ptp-sync
-.ptp-sync-folder
-/.gdbinit
-/Debug
-
-.gdb_history
 
 # python stuff
 *.egg-info/
@@ -40,8 +26,3 @@ __pycache__/
 # jetbrains stuff
 .idea
 *.iml
-
-# lma intermediate file stuff
-*.lmint
-*.mod
-
