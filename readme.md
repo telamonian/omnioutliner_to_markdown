@@ -12,4 +12,7 @@ Clone/cd into the repo, then just do
 
 ## Use
 
-    from ootomd import 
+    from ootomd import OOutlineToMarkdown
+    OOutlineToMarkdown(<path-to-.ooutline-file>)
+
+and that's it! See the docstring of `OOutlineToMarkdown` for more info on optional args.

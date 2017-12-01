@@ -1,22 +1,11 @@
 from pathlib import Path
 
-from todo_share.appleScript import CompileAstrTellApp, RunAppleScript
-from todo_share.txtToMarkdown import TxtToMarkdown
+from ootomd.appleScript import CompileAstrTellApp, RunAppleScript
+from ootomd.txtToMarkdown import TxtToMarkdown
 
-__all__ = ['formats', 'ActivateOutliner', 'GetFormatsOutliner', 'OOutlineToFormat']
+__all__ = ['formats', 'ActivateOutliner', 'GetFormatsOutliner', 'OOutlineToFormat', 'OOutlineToMarkdown']
 
-
-formatExtDct = {
-    'org.opml.opml':                                     '.opml',
-    'public.rtf':                                        '.rtf',
-    'public.plain-text':                                 '.txt',
-    'com.apple.rtfd':                                    '.rtfd',
-    'com.omnigroup.OmniOutliner.CSVExport.CSV':          '.csv',
-    'com.omnigroup.OmniOutliner.SimpleHTMLExport.HTML':  '.html',
-    'com.omnigroup.OmniOutliner.HTMLExport.HTMLDynamic': '_dynamic.html',
-    'markdown':                                          '.md',
-}
-extFormatDct = {val:key for key,val in formatExtDct.items()}
+# all of the format strings that OmniOutliner considers valid.
 formats = {
     'com.omnigroup.omnioutliner.xmlooutline',
     'com.omnigroup.omnioutliner.ooutline',
@@ -44,6 +33,18 @@ formats = {
     'com.omnigroup.OmniOutliner.CSVExport.CSV',
     'markdown',
 }
+formatExtDct = {
+    'org.opml.opml':                                     '.opml',
+    'public.rtf':                                        '.rtf',
+    'public.plain-text':                                 '.txt',
+    'com.apple.rtfd':                                    '.rtfd',
+    'com.omnigroup.OmniOutliner.CSVExport.CSV':          '.csv',
+    'com.omnigroup.OmniOutliner.SimpleHTMLExport.HTML':  '.html',
+    'com.omnigroup.OmniOutliner.HTMLExport.HTMLDynamic': '_dynamic.html',
+    'markdown':                                          '.md',
+}
+extFormatDct = {val:key for key,val in formatExtDct.items()}
+
 
 def _AstrActivateOutliner(safe):
     return CompileAstrTellApp('activate', appname='OmniOutliner', safe=safe)
@@ -82,6 +83,7 @@ def _AstrOOutlineToFormat(fpath, format, ext, fpathOut=None, safe=True):
 
     return CompileAstrTellApp(astr, appname='OmniOutliner', safe=safe),fpathOut
 
+
 def ActivateOutliner(dryrun=False, safe=True):
     astr = _AstrActivateOutliner(safe=safe)
 
@@ -99,6 +101,18 @@ def GetFormatsOutliner(dryrun=False, safe=True):
         return RunAppleScript(astr=astr, safe=safe)
 
 def OOutlineToFormat(fpath, format=None, ext=None, fpathOut=None, dryrun=False, safe=True):
+    """Convert an .ooutline to any format via a single Python function call.
+    Uses some AppleScript, and so is dependent upon pyobjc.
+
+    :fpath: Input file path. This is the .ooutline file that will be converted.
+    :format: Any of the format str that OmniOutliner considers valid. A set containing all valid format str can be found at ootomd.formats.
+    :ext: The filename extension that will be tacked onto the output file path in place of the input file's extension.
+    :fpathOut: Output file path. If None, the converted file will be created at the same path as the input file, but with extension `ext`.
+
+    Some args for debug
+    :dryrun: return the AppleScript (as a string) and `fpathOut` instead of actually doing anything.
+    :safe: if True, ensures that the runstate of OmniOutliner is unchanged by the actions of this function.
+    """
     astr,fpathOut = _AstrOOutlineToFormat(fpath=fpath, format=format, ext=ext, fpathOut=fpathOut, safe=safe)
 
     if dryrun:
@@ -111,3 +125,18 @@ def OOutlineToFormat(fpath, format=None, ext=None, fpathOut=None, dryrun=False, 
             TxtToMarkdown(fpathOut)
 
         return aret
+
+def OOutlineToMarkdown(fpath, format='markdown', ext='.md', fpathOut=None, dryrun=False, safe=True):
+    """Convert an .ooutline to a markdown file via a single Python function call.
+    Same as OOutlineToFormat, but with markdown-specific default args.
+
+    :fpath: Input file path. This is the .ooutline file that will be converted.
+    :format: Any of the format str that OmniOutliner considers valid. A set containing all valid format str can be found at ootomd.formats.
+    :ext: The filename extension that will be tacked onto the output file path in place of the input file's extension.
+    :fpathOut: Output file path. If None, the converted file will be created at the same path as the input file, but with extension `ext`.
+
+    Some args for debug
+    :dryrun: return the AppleScript (as a string) and `fpathOut` instead of actually doing anything.
+    :safe: if True, ensures that the runstate of OmniOutliner is unchanged by the actions of this function.
+    """
+    return OOutlineToFormat(fpath=fpath, format=format, ext=ext, fpathOut=fpathOut, dryrun=dryrun, safe=safe)
